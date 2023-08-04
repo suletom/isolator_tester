@@ -1,0 +1,13 @@
+{
+    "name": "isolator_tester",
+    "version": "1.0.0.",
+    "description": "teszt",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "author": "suletom",
+    "dependencies": {
+        "serialport": "^11.0.1"
+    }
+}
