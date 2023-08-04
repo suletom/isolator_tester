@@ -9,5 +9,9 @@
     "author": "suletom",
     "dependencies": {
         "serialport": "^11.0.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/suletom/isolator_tester.git"
     }
 }
