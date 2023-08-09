@@ -9,14 +9,55 @@ const port = new SerialPort({
   dataBits: 8
 });
 
+class serialsync{
+
+    constructor(port){
+        this.port=port;
+        this.commands=[];
+        this.error="";
+
+        this.port.on('data', function (data) {
+
+            let floatstr=data.toString();
+            let floatnum=Number.parseFloat(floatstr);
+        
+            console.log('Data:', data.toString())
+            console.log('Float:',floatnum);
+        
+            this.commands[this.commands.length-1]["ret"]={"str":floatstr,"float":floatnum};
+            
+        });
+
+    }
+
+    write(cmd){
+        console.log("writing command: ",cmd);
+        commands.push({"cmd": cmd});
+
+        this.port.write(cmd+"\n", function(err) {
+            if (err) {
+                console.log('Error on write: ', err.message)
+                this.error='Error on write: ', err.message;
+            }
+        });
+
+    }
+
+    read(timeout=1){
+        
+    }
+
+}
+
+
 let commands=[];
 
-commands.push({"cmd": "OUTP OFF"});
-commands.push({"cmd": "CURR 0.5"});
-commands.push({"cmd": "VOLT:RANG P20V"});
-commands.push({"cmd": "VOLT 12"});
-commands.push({"cmd": function(){
-    for(let i=12;i<=14;i++){
+write_ser("OUTP OFF");
+write_ser("CURR 0.5");
+write_ser("OLT:RANG P20V");
+
+commands.push({"cmd": function(j=12){
+    for(let i=j;i<=14;i++){
         //commands.push({"cmd": "OUTP ON"});
         //cmd: VOLT $i
         //wait
@@ -41,24 +82,17 @@ commands.push({"cmd": "MEAS:CURR?"});
 commands.push({"cmd": "MEAS:VOLT?"});
 commands.push({"cmd": "OUTP OFF"});
 
-port.write("MEAS:CURR?\n", function(err) {
-    if (err) {
-      return console.log('Error on write: ', err.message)
-    }
-    console.log('message written')
-});
+function write_ser(port,cmd) {
+
+    
+    
+}
+
+
   
   // Open errors will be emitted as an error event
 port.on('error', function(err) {
     console.log('Error: ', err.message)
 });
 
-port.on('data', function (data) {
-    let floatstr=data.toString();
-    let floatnum=Number.parseFloat(floatstr);
 
-
-
-    console.log('Data:', data.toString())
-    console.log('Float:',floatnum);
-});

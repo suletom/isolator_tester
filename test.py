@@ -2,27 +2,48 @@ import serial
 import time
 
 def swrite(serc):
-    print(serc+"\n");
-    ser.write(serc+"\n");
+    wt=serc+"\n"
+    print(wt);
+    ser.write(wt.encode());
     line=ser.readline();
-    print(line+"\n");
+    if line.decode('ascii') == "":
+        print('')
+    else:     
+        print(line);
 
-    return line;
+    line = line.decode('ascii')
+    line2 = str(line)
+    line2 = line2.strip()
+    return (line2)
 
 def fget(line):
     return float(line)
 
 def testc(a,f,inc):
-    for i in range(a,f):
-        swrite("VOLT "+(i/1000));
+
+    print(" ");
+    print("Check: From: "+str(a)+" To: "+str(f)+"     inc:"+str(inc));
+    
+    for i in range(a,f,inc):
+        
+        cv=(i/1000)
+        swrite("VOLT "+str(cv));
         swrite("OUTP ON");
-        time.sleep(0.1);
+
+        time.sleep(0.5);
         currstr=swrite("MEAS:CURR?");
         currfloat=fget(currstr);
-        if currfloat > 0.050 :
-            if inc = 10 :
-                return currfloat
-            return testc(i,i+1,inc/10);
+        if currfloat > 1.2 :
+            if inc == 1 :
+                print("Current: "+str(currfloat));
+                return cv;
+            
+            at = i-inc;
+
+            swrite("OUTP OFF");
+            time.sleep(0.5);
+            
+            return testc(at,i,int(inc/10));
     
     return 0
 
@@ -34,14 +55,28 @@ print("waiting...");
 time.sleep(1)
 
 print("setting defaults...");
-swrite("OUTP OFF");
-swrite("CURR 0.5");
 swrite("VOLT:RANG P20V");
+#swrite("OUTP OFF");
+swrite("CURR 3");
+swrite("VOLT 10");
+
+swrite("OUTP ON");
+
+currstr=swrite("MEAS:CURR?");
+currfloat=fget(currstr);
+if currfloat > 2:
+    print("OverCurrent!");
+    print("TEST FAILED");
+    swrite("OUTP OFF");
+    quit()
  
-res=testc(12,14,1000);
-if res = 0:
+res=testc(12000,14000,1000);
+
+swrite("OUTP OFF");
+
+if res == 0:
     print("TEST FAILED");
 
-print("TEST RESULT: "+res);
+print("TEST RESULT: "+str(res)+" Volt");
 
 ser.close()
