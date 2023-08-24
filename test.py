@@ -1,5 +1,6 @@
 import serial
 import time
+from datetime import datetime
 
 def swrite(serc):
     wt=serc+"\n"
@@ -22,61 +23,105 @@ def fget(line):
 def testc(a,f,inc):
 
     print(" ");
-    print("Check: From: "+str(a)+" To: "+str(f)+"     inc:"+str(inc));
+    print("Check: Tol: "+str(a)+" Ig: "+str(f)+"     inc:"+str(inc));
     
     for i in range(a,f,inc):
         
         cv=(i/1000)
         swrite("VOLT "+str(cv));
-        swrite("OUTP ON");
 
-        time.sleep(0.5);
+        time.sleep(12);
         currstr=swrite("MEAS:CURR?");
         currfloat=fget(currstr);
-        if currfloat > 1.2 :
+        if currfloat > 0.05 :
             if inc == 1 :
                 print("Current: "+str(currfloat));
                 return cv;
             
             at = i-inc;
 
-            swrite("OUTP OFF");
-            time.sleep(0.5);
+            swrite("VOLT 0");
+            time.sleep(1);
             
             return testc(at,i,int(inc/10));
     
     return 0
 
+def testcback(a,f,inc):
+
+    print(" ");
+    print("Check: From: "+str(a)+" To: "+str(f)+"     inc:"+str(inc));
+    
+    for i in reversed(range(a,f,inc)):
+        
+        cv=(i/1000)
+        swrite("VOLT "+str(cv));
+
+        time.sleep(12);
+        currstr=swrite("MEAS:CURR?");
+        currfloat=fget(currstr);
+        if currfloat < 0.05 :
+            if inc == 1 :
+                print("Current: "+str(currfloat));
+                return cv;
+            
+            at = i+inc;
+
+            swrite("VOLT 14");
+            time.sleep(12);
+            
+            return testcback(i,at,int(inc/10));
+    
+    return 0
 
 print("Opening serial connection...");
 ser = serial.Serial('COM3', 9600, timeout=1,parity=serial.PARITY_NONE,stopbits=2)
 
 print("waiting...");
-time.sleep(1)
+time.sleep(0.5)
 
 print("setting defaults...");
+swrite("OUTP OFF");
 swrite("VOLT:RANG P20V");
-#swrite("OUTP OFF");
-swrite("CURR 3");
+swrite("CURR 0.5");
 swrite("VOLT 10");
 
 swrite("OUTP ON");
 
+logfile = open("tester_logfile.txt", "a");
+
 currstr=swrite("MEAS:CURR?");
 currfloat=fget(currstr);
-if currfloat > 2:
+if currfloat > 0.49 :
     print("OverCurrent!");
     print("TEST FAILED");
+    logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": Overcurrent TEST FAILED\n")
     swrite("OUTP OFF");
     quit()
  
-res=testc(12000,14000,1000);
+res=testc(12000,15000,1000);
 
-swrite("OUTP OFF");
+
 
 if res == 0:
     print("TEST FAILED");
+    logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": TEST FAILED\n")
+    quit();
+
+res2=testcback(10000,15000,1000);
+
+swrite("OUTP OFF");
+
+if res2 == 0:
+    print("BACKTEST FAILED");
+    logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": BACKTEST FAILED\n")
+    quit();
+
 
 print("TEST RESULT: "+str(res)+" Volt");
+print("BACKTEST RESULT: "+str(res2)+" Volt");
+
+logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": TEST RESULT: "+str(res)+" Closing Voltage\n")
+logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": BACKTEST RESULT: "+str(res2)+" Opening Voltage\n")
 
 ser.close()
