@@ -4,15 +4,16 @@ from datetime import datetime
 
 def swrite(serc):
     wt=serc+"\n"
-    print(wt);
+    print(serc);
     ser.write(wt.encode());
     line=ser.readline();
-    if line.decode('ascii') == "":
-        print('')
-    else:     
-        print(line);
+    #if line.decode('ascii') == "":
+    #    print('')
+    #else:     
+    #    print(line);
 
     line = line.decode('ascii')
+    print(line);
     line2 = str(line)
     line2 = line2.strip()
     return (line2)
@@ -23,9 +24,9 @@ def fget(line):
 def testc(a,f,inc):
 
     print(" ");
-    print("Check: Tol: "+str(a)+" Ig: "+str(f)+"     inc:"+str(inc));
+    print("Check: Tol: "+str(a)+" Ig: "+str(f+inc)+"     inc:"+str(inc));
     
-    for i in range(a,f,inc):
+    for i in range(a,f+inc,inc):
         
         cv=(i/1000)
         swrite("VOLT "+str(cv));
@@ -50,9 +51,9 @@ def testc(a,f,inc):
 def testcback(a,f,inc):
 
     print(" ");
-    print("Check: From: "+str(a)+" To: "+str(f)+"     inc:"+str(inc));
+    print("Check: From: "+str(a-inc)+" To: "+str(f)+"     inc:"+str(inc));
     
-    for i in reversed(range(a,f,inc)):
+    for i in reversed(range(a-inc,f,inc)):
         
         cv=(i/1000)
         swrite("VOLT "+str(cv));
@@ -99,9 +100,17 @@ if currfloat > 0.49 :
     swrite("OUTP OFF");
     quit()
  
+swrite("VOLT 14");
+time.sleep(20)
+currstr=swrite("MEAS:CURR?");
+currfloat=fget(currstr);
+voltstr=swrite("MEAS:VOLT?")
+voltval=fget(voltstr)
+ohm=voltval/currfloat
+swrite("VOLT 0");
+
+
 res=testc(12000,15000,1000);
-
-
 
 if res == 0:
     print("TEST FAILED");
@@ -120,8 +129,10 @@ if res2 == 0:
 
 print("TEST RESULT: "+str(res)+" Volt");
 print("BACKTEST RESULT: "+str(res2)+" Volt");
+print("10V resistance measurment: "+str(ohm)+" Ohm");
 
 logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": TEST RESULT: "+str(res)+" Closing Voltage\n")
 logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": BACKTEST RESULT: "+str(res2)+" Opening Voltage\n")
+logfile.write(datetime.now().strftime('%Y-%m-%d_%H-%M')+": 10V resistance measurment: "+str(ohm)+" Ohm\n")
 
 ser.close()
